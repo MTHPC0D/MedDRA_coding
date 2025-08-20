@@ -78,7 +78,7 @@ def process_csv_file(input_file, output_file, term_column='term', top_k=5):
         raise ValueError(f"Column '{term_column}' not found in input file. Available columns: {list(df_input.columns)}")
     
     # Get terms to process
-    terms = df_input[term_column].dropna().tolist()
+    terms = df_input[term_column].fillna('').astype(str).tolist()
     
     print(f"Processing {len(terms)} terms...")
     
@@ -111,17 +111,17 @@ def process_csv_file(input_file, output_file, term_column='term', top_k=5):
     return df_output
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Code medical terms from CSV file')
-    parser.add_argument('--input', '-i', help='Input CSV file path')
-    parser.add_argument('--output', '-o', help='Output CSV file path') 
-    parser.add_argument('--column', '-c', default='term', help='Column name containing terms to code (default: term)')
-    parser.add_argument('--top_k', '-k', type=int, default=5, help='Number of top results per term (default: 5)')
-    
+    parser = argparse.ArgumentParser(description="Code medical terms (single or CSV).")
+    parser.add_argument("--input", "-i", help="Input CSV path")
+    parser.add_argument("--output", "-o", help="Output CSV path")
+    parser.add_argument("--column", "-c", default="term", help="Column containing terms (default: term)")
+    parser.add_argument("--top_k", "-k", type=int, default=5, help="Top K per term (default: 5)")
     args = parser.parse_args()
-    
     if args.input and args.output:
-        process_csv_file(args.input, args.output, args.column, args.top_k)
+        df = process_csv_file(args.input, args.output, args.column, args.top_k)
+        print(f"Saved {len(df)} rows to {args.output}")
     else:
-        # Original example code
+        q = ["GLOBULAR PELLET", "ABDOMINAL PAIN", "ABSCESS DRAINAGE SURGERY (AE SKIN INFECTION)"]
+        print(batch_code_llt(q, top_k=3))
         q = ["GLOBULAR PELLET", "ABDOMINAL PAIN", "ABSCESS DRAINAGE SURGERY (AE SKIN INFECTION)"]
         print(batch_code_llt(q, top_k=3))

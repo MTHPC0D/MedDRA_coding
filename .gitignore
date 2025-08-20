@@ -1,0 +1,27 @@
+# Cache files
+cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment files
+.env
+.venv/
+venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large data files (optionnel - décommentez si nécessaire)
+# *.csv
+# *.xlsx
+# *.json

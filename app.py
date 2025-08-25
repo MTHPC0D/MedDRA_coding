@@ -45,26 +45,31 @@ def get_cache_status(cache_dir: str = "cache"):
 
     return ok, details, paths
 
-st.caption("Lancez la construction de l'index si le cache est absent ou obsolète.")
-
 cache_ok, cache_details, cache_paths = get_cache_status()
 if cache_ok:
-    st.success("Cache présent et cohérent.")
+    st.success("Cache prêt.")
+    if cache_details:
+        with st.expander("Détails du cache"):
+            for line in cache_details:
+                st.write(line)
 else:
-    st.warning("Cache absent ou incomplet.")
-
-for line in cache_details:
-    st.caption(line)
+    st.warning("Cache manquant ou incomplet.")
+    if cache_details:
+        with st.expander("Détails"):
+            for line in cache_details:
+                st.write(line)
 
 csv_present = os.path.exists("MedDRA_database.csv")
 if not csv_present:
-    st.error("Fichier source 'MedDRA_database.csv' introuvable dans le répertoire courant.")
+    st.error("Fichier source 'MedDRA_database.csv' introuvable.")
 
-col_a, col_b = st.columns([1, 3])
+col_a, _ = st.columns([1, 3])
 with col_a:
-    build_btn = st.button("Construire / Mettre à jour le cache", disabled=not csv_present)
-with col_b:
-    st.caption("Cette opération peut prendre plusieurs minutes (téléchargement de modèles et encodage).")
+    build_btn = st.button(
+        "Construire / Mettre à jour le cache",
+        disabled=not csv_present,
+        help="Télécharge les modèles et encode les variantes (peut prendre plusieurs minutes)."
+    )
 
 if build_btn:
     with st.spinner("Construction de l'index en cours..."):
@@ -72,21 +77,19 @@ if build_btn:
     # Re-évalue le statut
     cache_ok, cache_details, cache_paths = get_cache_status()
     if cache_ok:
-        st.success(f"Cache reconstruit. {cache_details[0] if cache_details else ''}")
+        st.success("Cache reconstruit.")
         # Recharge le module query pour prendre en compte le nouveau cache
         try:
             import query as query_module
             importlib.reload(query_module)
             globals()['batch_code_llt'] = query_module.batch_code_llt
-            st.caption("Moteur rechargé avec le nouveau cache.")
+            st.caption("Moteur rechargé.")
         except Exception as e:
-            st.warning(f"Cache reconstruit mais le moteur n'a pas pu être rechargé automatiquement: {e}")
+            st.warning(f"Cache reconstruit, rechargement du moteur impossible: {e}")
     else:
         st.error("La reconstruction du cache n'a pas abouti. Consultez les logs de la console.")
 
 # --- end cache status UI ---
-
-st.caption("Assurez-vous d'avoir exécuté build_index.py (génère cache/) avant d'utiliser cette interface.")
 
 tabs = st.tabs(["Coder un terme", "Coder un fichier CSV"])
 

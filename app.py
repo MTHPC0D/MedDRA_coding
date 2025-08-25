@@ -1,11 +1,17 @@
 import streamlit as st
 import pandas as pd
 from io import StringIO
-from query import batch_code_llt  # imports models & resources once
 # --- added imports for cache status and rebuilding ---
 import os, numpy as np, importlib
 import build_index as build_mod
 # --- end added imports ---
+
+# Handle missing cache gracefully
+try:
+    from query import batch_code_llt
+except Exception as e:
+    st.error(f"Erreur de chargement du moteur: {e}")
+    batch_code_llt = None
 
 st.set_page_config(page_title="MedDRA Coding", layout="wide")
 
@@ -58,27 +64,21 @@ def get_cache_status(cache_dir: str = "cache"):
     return ok, details, paths
 
 cache_ok, cache_details, cache_paths = get_cache_status()
-if cache_ok:
-    st.success("Cache prêt.")
-    if cache_details:
-        with st.expander("Détails du cache"):
-            for line in cache_details:
-                st.write(line)
-else:
-    st.warning("Cache manquant ou incomplet.")
-    if cache_details:
-        with st.expander("Détails"):
-            for line in cache_details:
-                st.write(line)
-
 csv_present = os.path.exists("MedDRA_database.csv")
-if not csv_present:
-    st.error("Fichier source 'MedDRA_database.csv' introuvable.")
 
-col_a, _ = st.columns([1, 3])
-with col_a:
+# Compact cache status + build button
+col1, col2 = st.columns([2, 1])
+with col1:
+    if cache_ok:
+        st.success("Cache prêt.")
+    else:
+        st.warning("Cache manquant ou incomplet.")
+        if not csv_present:
+            st.error("Fichier source 'MedDRA_database.csv' introuvable.")
+
+with col2:
     build_btn = st.button(
-        "Construire / Mettre à jour le cache",
+        "Construire / Mettre à jour",
         disabled=not csv_present,
         help="Télécharge les modèles et encode les variantes (peut prendre plusieurs minutes)."
     )
@@ -109,15 +109,16 @@ with tabs[0]:
     st.subheader("Terme unique")
     term = st.text_input("Entrez un terme médical à coder", "")
     top_k_single = st.slider("Nombre de propositions (Top K)", 1, 20, 5)
-    if st.button("Coder", disabled=not term.strip()):
-        results = batch_code_llt([term], top_k=top_k_single)[0]
-        if results:
-            df_single = pd.DataFrame(results)
-            hidden_cols = ['score_ce', 'score_ce_sigmoid', 'combined_score', 'level', 'penalty', 'sim_edit', 'sim_cosine', 'src']
-            df_single = df_single.drop(columns=[c for c in hidden_cols if c in df_single.columns])
-            st.dataframe(df_single, use_container_width=True)
-        else:
-            st.info("Aucun résultat.")
+    if st.button("Coder", disabled=not term.strip() or not batch_code_llt):
+        if batch_code_llt:
+            results = batch_code_llt([term], top_k=top_k_single)[0]
+            if results:
+                df_single = pd.DataFrame(results)
+                hidden_cols = ['score_ce', 'score_ce_sigmoid', 'combined_score', 'level', 'penalty', 'sim_edit', 'sim_cosine', 'src']
+                df_single = df_single.drop(columns=[c for c in hidden_cols if c in df_single.columns])
+                st.dataframe(df_single, use_container_width=True)
+            else:
+                st.info("Aucun résultat.")
 
 with tabs[1]:
     st.subheader("Batch CSV")
@@ -133,8 +134,8 @@ with tabs[1]:
             st.write(f"Lignes: {len(df_in)}")
             col = st.selectbox("Colonne contenant les termes", options=df_in.columns.tolist())
             top_k_batch = st.slider("Top K par terme", 1, 20, 5, key="batch_topk")
-            run = st.button("Lancer le codage")
-            if run:
+            run = st.button("Lancer le codage", disabled=not batch_code_llt)
+            if run and batch_code_llt:
                 terms = df_in[col].fillna('').astype(str).tolist()
                 results = batch_code_llt(terms, top_k=top_k_batch)
                 rows = []

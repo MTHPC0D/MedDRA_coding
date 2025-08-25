@@ -113,7 +113,7 @@ with tabs[0]:
         results = batch_code_llt([term], top_k=top_k_single)[0]
         if results:
             df_single = pd.DataFrame(results)
-            hidden_cols = ['score_ce', 'score_ce_sigmoid', 'combined_score', 'level', 'penalty']
+            hidden_cols = ['score_ce', 'score_ce_sigmoid', 'combined_score', 'level', 'penalty', 'sim_edit', 'sim_cosine', 'src']
             df_single = df_single.drop(columns=[c for c in hidden_cols if c in df_single.columns])
             st.dataframe(df_single, use_container_width=True)
         else:
@@ -152,7 +152,7 @@ with tabs[1]:
                             'score': r['score']
                         })
                 df_out = pd.DataFrame(rows)
-                hidden_cols = ['score_ce', 'score_ce_sigmoid', 'combined_score', 'level', 'penalty']
+                hidden_cols = ['score_ce', 'score_ce_sigmoid', 'combined_score', 'level', 'penalty', 'sim_edit', 'sim_cosine', 'src']
                 df_out = df_out.drop(columns=[c for c in hidden_cols if c in df_out.columns])
                 st.success(f"Codage terminé: {len(df_out)} lignes (Top {top_k_batch}).")
                 st.dataframe(df_out, use_container_width=True)

@@ -13,6 +13,18 @@ st.markdown("""
 <style>
 body { font-family: system-ui, sans-serif; }
 .block-container { padding-top: 1.5rem; }
+/* Hide Streamlit Deploy and toolbar/menu */
+[data-testid="stDeployButton"] { display: none !important; }
+[data-testid="stToolbar"] { display: none !important; }
+#MainMenu { visibility: hidden; }
+header [data-testid="baseButton-header"] { display: none !important; }
+/* Hide Deploy modal/popup if it appears */
+[data-testid="stModal"] { display: none !important; }
+div[data-testid="stModal"] { display: none !important; }
+.stDeployButton { display: none !important; }
+/* Hide any Deploy-related dialogs */
+div[role="dialog"][aria-label*="Deploy"] { display: none !important; }
+div[role="dialog"] .stMarkdown:has-text("Deploy this app") { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 

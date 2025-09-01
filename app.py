@@ -66,15 +66,13 @@ def get_cache_status(cache_dir: str = "cache"):
 cache_ok, cache_details, cache_paths = get_cache_status()
 csv_present = os.path.exists("MedDRA_database.csv")
 
-# Compact cache status + build button
-col1, col2 = st.columns([2, 1])
+# Compact cache status + build button with auto-sizing
+col1, col2, col3 = st.columns([3, 2, 4])
 with col1:
     if cache_ok:
         st.success("Cache prêt.")
     else:
         st.warning("Cache manquant ou incomplet.")
-        if not csv_present:
-            st.error("Fichier source 'MedDRA_database.csv' introuvable.")
 
 with col2:
     build_btn = st.button(
@@ -82,6 +80,10 @@ with col2:
         disabled=not csv_present,
         help="Télécharge les modèles et encode les variantes (peut prendre plusieurs minutes)."
     )
+
+with col3:
+    if not csv_present:
+        st.error("Fichier source 'MedDRA_database.csv' introuvable.")
 
 if build_btn:
     with st.spinner("Construction de l'index en cours..."):
